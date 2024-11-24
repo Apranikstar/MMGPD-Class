@@ -1,1 +1,6 @@
-conda install uncertainties lhapdf numpy scipy
+MMGPD Collaboration 
+HSQCD.com
+Apranik Fatehi
+
+requirements
+ packages: uncertainties lhapdf numpy scipy
