@@ -1,0 +1,1 @@
+conda install uncertainties lhapdf numpy scipy
