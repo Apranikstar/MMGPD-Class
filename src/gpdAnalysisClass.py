@@ -12,7 +12,7 @@ from .uncertaintyGPDClass import UncertaintyGPD
 class GPDAnalysis:
     def __init__(self, analysis_type):
         """
-        Initialize the analysis with a specific type.
+        Initialize the analysis with a specific Analysis.
         """
         self.__analysis_type = analysis_type
         self.Q2 = self.__get_Q2__()
@@ -23,7 +23,7 @@ class GPDAnalysis:
         self.__UGridPDFs = self.__get_ugrid_pdfs__()
         self.__PGridPDFs = self.__get_pgrid_pdfs__()
         self.print_analysis_doi()
-        self.flavor_map = {
+        self.__flavor_map = {
             "u": 2, "ubar": -2, "uv": (2, -2),
             "d": 1, "dbar": -1, "dv": (1, -1),
             "s": 3, "sbar": -3, "sv": (3, -3),
@@ -62,6 +62,19 @@ class GPDAnalysis:
             delta = UncertaintyGPD(analysisSet,gpdType, flavor, x,t).uncertainty
 
         return ufloat(nominal,delta)
+    
+    def xGPDxi(self,analysisSet, gpdType, flavor, x, t, xi):
+        if xi ==0:
+            return self.xGPD(analysisSet, gpdType, flavor, x, t)
+        b0 = np.divide(x+xi,1+xi)
+        if x <= xi:
+            a0 = 1e-5
+        else:
+            a0 = np.divide(x-xi,1-xi) 
+        return quad(self.__xGPDxiIntegrand__, a0, b0, args=(analysisSet, gpdType , flavor,x,t,xi),epsabs=1e-9, limit = 150 )[0]
+
+        
+        
     
 #################################### Setters
     def list_GPDTypes(self):
@@ -138,7 +151,7 @@ class GPDAnalysis:
     def __pdfHandler__(self, flavor, x,mkPDF):
 
         sqrtQ = np.sqrt(self.Q2)
-        code = self.flavor_map.get(flavor)
+        code = self.__flavor_map.get(flavor)
         if isinstance(code, tuple):  # For valence (e.g., "uv", "dv")
             return mkPDF.xfxQ(code[0], x, sqrtQ) - mkPDF.xfxQ(code[1], x, sqrtQ)
         elif code is not None:  # For other flavors (e.g., "u", "ubar")
@@ -148,7 +161,7 @@ class GPDAnalysis:
         
     def __uncertainPDF__(self, flavor, x,pset,mkpdf):
         sqrtQ = np.sqrt(self.Q2)
-        code = self.flavor_map.get(flavor)
+        code = self.__flavor_map.get(flavor)
         xfAll = [0.0] * pset.size
         # Fill xfAll based on flavor 
         if isinstance(code, tuple):  # For valence (e.g., "uv", "dv")
@@ -179,5 +192,11 @@ class GPDAnalysis:
         N = np.divide(1, quad(integrand, 0, 1, args=(parameterList[3], parameterList[4], parameterList[5]))[0])
         return x * k.get(flavor) * N * np.power(x,-parameterList[3]) * np.power(1-x,parameterList[4]) * (1+ parameterList[5] * np.sqrt(x))
     
+
+    def __xGPDxiIntegrand__( self, b, analysisSet, gpdType , flavor , x, t , xi ):
+        #Hv = MMGPD.xGPD(InitilizerArgs, Set, GPDType , Flavour, b, t) / b
+        Hv = self.xGPD(analysisSet, gpdType, flavor, x, t)
+        sd = np.divide(Hv, np.power(1-b,3))
+        return np.divide(3,4)*sd*(np.power(1-b,2)-np.power(x-b,2)/np.power(xi,2))/xi
 
 ################################### End of xGPD Subroutines
