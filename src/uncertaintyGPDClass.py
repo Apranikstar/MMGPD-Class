@@ -31,7 +31,7 @@ class UncertaintyGPD:
             elif "E" == self.gpdType:
                 if "uv" == self.flavor:
                     self.uncertainty = self.__SigEuvSet11(self.x, self.t)
-                if "dv" == self.flavor:
+                elif "dv" == self.flavor:
                     self.uncertainty = self.__SigEdvSet11(self.x, self.t)
 
 

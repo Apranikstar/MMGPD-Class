@@ -19,16 +19,18 @@ class SkewedDataGenerator:
         self.scattering_rate = scattering_rate
         
         # Generate the skewed data immediately
-        self.data = self._generate_data()
-
-    def _generate_data(self):
+        self.data = self.__generate_data__()
+        
+    def __call__(self):
+        return self.data
+    def __generate_data__(self):
         """
         Internal method to generate skewed data.
         
         :return: A sorted array of skewed data points in ascending order.
         """
         # Generate values in the range [initial, final]
-        uniform_random_values = np.random.uniform(self.initial, self.final, self.num_points)
+        uniform_random_values = np.random.uniform(0, 1, self.num_points)
         
         # Apply the transformation to skew values towards initial
         skewed_values = np.power(uniform_random_values, self.scattering_rate)
