@@ -19,25 +19,16 @@ class Observables:
         return np.divide(self.__term_d1_without_sea__(t,xi),xi**2) * np.divide(5,4)
 
 #########################
-    def r2mass_p_w_sea(self, D0):
+    def r2mass_p_w_A0(self, D0):
         
-        result = (-6 * self.__diffA0_w_sea__() - (3 * np.divide(D0, 2 * self.m_p2))) * np.divide(1, self.__A0_w_sea__())
+        result = (6 * self.__diffA0__() - (3 * np.divide(D0, 2 * self.m_p2))) * np.divide(1, self.__A0__())
         return result * (0.1973 ** 2)
     
-    def r2mass_p_wo_sea(self, D0):
+    def r2mass_p_wo_A0(self, D0):
         
-        result = (-6 * self.__diffA0_wo_sea__() - (3 * np.divide(D0, 2 * self.m_p2))) * np.divide(1, self.__A0_wo_sea__())
+        result = (6 * self.__diffA0__() - (3 * np.divide(D0, 2 * self.m_p2))) 
         return result * (0.1973 ** 2)
 
-    def r2mass_n_w_sea(self, D0):
-        
-        result = (-6 * self.__diffA0_w_sea__() - (3 * np.divide(D0, 2 * self.m_n2))) * np.divide(1, self.__A0_w_sea__())
-        return result * (0.1973 ** 2)
-    
-    def r2mass_n_wo_sea(self, D0):
-        
-        result = (-6 * self.__diffA0_wo_sea__() - (3 * np.divide(D0, 2 * self.m_n2))) * np.divide(1, self.__A0_wo_sea__())
-        return result * (0.1973 ** 2)
 
 ##############################################################################################################################
   ########################################################Subroutines########################################################
@@ -71,22 +62,15 @@ class Observables:
                 ########################### r2 mass Subroutines ###########################
 
     
-    def __A0_w_sea__(self):
+    def __A0__(self):
         def __A0integrand__(x,t):
             return (self.__gpdAnalysis.xGPD("Set11", "H" , "uv" , x , t)   +2 * self.__gpdAnalysis.xGPD("Set11", "H" , "ubar" , x , t)
                     + self.__gpdAnalysis.xGPD("Set11", "H" , "dv" , x , t)  + 2 * self.__gpdAnalysis.xGPD("Set11", "H" , "dbar" , x , t) )
         t = 0
         return quad (__A0integrand__ , 0 , 1 , args = (t,) , limit = 250)[0]
     
-        
-    def __A0_wo_sea__(self):
-        def __A0integrand__(x,t):
-            return (self.__gpdAnalysis.xGPD("Set11", "H" , "uv" , x , t)   
-                    + self.__gpdAnalysis.xGPD("Set11", "H" , "dv" , x , t)  )
-        t = 0
-        return quad (__A0integrand__ , 0 , 1 , args = (t,) , limit = 250)[0]
 
-    def __diffA0_w_sea__(self):
+    def __diffA0__(self):
         def __integranddiffA__(x):
             profFuncParameters={}
             flavor = ["uv","dv","ubar", "dbar"]
@@ -99,20 +83,6 @@ class Observables:
                )
         return quad (__integranddiffA__ , 0 , 1, limit = 250)[0]
 
-
-
-    def __diffA0_wo_sea__(self):
-        def __integranddiffA__(x):
-            profFuncParameters={}
-            flavor = ["uv","dv"]
-            for items in flavor:
-                profFuncParameters[items] = getProfileFunctionParameters("HGAG23", "H", "Set11")(items)
-            return (      ProfileFunction(profFuncParameters["uv"],x)()    *self.__gpdAnalysis.xGPD("Set11", "H" , "uv" , x , 0)
-                +     ProfileFunction(profFuncParameters["dv"],x)()    *self.__gpdAnalysis.xGPD("Set11", "H" , "dv" , x , 0) 
-
-               )
-        return quad (__integranddiffA__ , 0 , 1, limit = 250)[0]
-    
     ##############################################################################################################################
     ##############################################################################################################################
     ##############################################################################################################################
