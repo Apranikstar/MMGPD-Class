@@ -10,10 +10,22 @@ from .uncertaintyGPDClass import UncertaintyGPD
 
 
 class GPDAnalysis:
+    """
+    Class used to access the following:
+    xGPD(analysisSet, gpdType, flavor, x, t)
+    xGPDwUnc(analysisSet, gpdType, flavor, x, t)
+    xGPDxi(analysisSet, gpdType, flavor, x, t,xi)
+    """
+    """
+        Initialize the analysis with a specific Analysis.
+        param::string analysisName e.g "HGAG23"
+    """
     def __init__(self, analysis_type):
         """
         Initialize the analysis with a specific Analysis.
+        param::string analysisName e.g "HGAG23"
         """
+        self.name = analysis_type
         self.__analysis_type = analysis_type
         self.Q2 = self.__get_Q2__()
         self.__UPDF = self.__get_analysis_updf__()
@@ -35,6 +47,13 @@ class GPDAnalysis:
 
 
     def xGPD(self,analysisSet, gpdType, flavor, x, t):
+        """
+        param::string::analysisSet e.g. "Set11"
+        param::string::gpdType e.g. "Ht"
+        param::string::flavor e.g. "dv"
+        param::float::x values between 0,1 (not the 0 itself)
+        param::float::t Negative values (t=0 returns the forward limit)
+        """
         profFuncParameters = getProfileFunctionParameters(self.__analysis_type, gpdType, analysisSet)(flavor)
         profileFunction = ProfileFunction(profFuncParameters,x)() # last () is intentional, don't remove
         if "H" == gpdType:
@@ -46,6 +65,16 @@ class GPDAnalysis:
         return pdfFunction * np.exp(t * profileFunction)
     
     def xGPDwUnc(self,analysisSet, gpdType, flavor, x, t):
+        """
+        Returns ufloat(xGPD,uncertainty)
+        use .n to get the nominal value
+        use .s to get the uncertainty value
+        param::string::analysisSet e.g. "Set11"
+        param::string::gpdType e.g. "Ht"
+        param::string::flavor e.g. "dv"
+        param::float::x between 0,1 (not the 0 itself)
+        param::float::t Negative values (t=0 returns the forward limit)
+        """
         nominal = self.xGPD(analysisSet, gpdType, flavor, x, t)
         profFuncParameters = getProfileFunctionParameters(self.__analysis_type, gpdType, analysisSet)(flavor)
         profileFunction = ProfileFunction(profFuncParameters,x)() # last () is intentional, don't remove
@@ -64,6 +93,14 @@ class GPDAnalysis:
         return ufloat(nominal,delta)
     
     def xGPDxi(self,analysisSet, gpdType, flavor, x, t, xi):
+        """
+        param::string::analysisSet e.g. "Set11"
+        param::string::gpdType e.g. "Ht"
+        param::string::flavor e.g. "dv"
+        param::float::x between 0,1 (not the 0 itself)
+        param::float::t Negative values (t=0 returns the forward limit)
+        param::float::xi between 0,1 (not the 0 itself)
+        """
         if xi ==0:
             return self.xGPD(analysisSet, gpdType, flavor, x, t)
         b0 = np.divide(x+xi,1+xi)
