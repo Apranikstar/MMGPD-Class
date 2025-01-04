@@ -10,7 +10,7 @@ from src import xPDF, GPDAnalysis
 from src import Observables
 from src import getProfileFunctionParameters, ProfileFunction, deltaProfileFunction
 from src import SkewedDataGenerator
-
+from src import EMObservables
 
 __all__ = ["xPDF",
             "GPDAnalysis",
@@ -19,5 +19,6 @@ __all__ = ["xPDF",
             "getProfileFunctionParameters",
             "deltaProfileFunction",
             "SkewedDataGenerator",
+            "EMObservables",
             ]
 

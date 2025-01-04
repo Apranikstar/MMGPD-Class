@@ -6,8 +6,9 @@ from .profileFuncClass import ProfileFunction
 from .profileFuncClass import deltaProfileFunction
 from .csvParserClass import getProfileFunctionParameters
 from .observables import Observables
+from .emObservables import EMObservables
 # Optional: Define what gets imported with `from src import *`
 __all__ = ["xPDF", "GPDAnalysis", "SkewedDataGenerator" , 
            "ProfileFunction","getProfileFunctionParameters","Observables",
-           "deltaProfileFunction",
+           "deltaProfileFunction", "EMObservables"
            ]
