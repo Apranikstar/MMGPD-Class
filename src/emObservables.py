@@ -71,10 +71,14 @@ class EMObservables:
         def F1F2GM(x,ID,t):
             return F1(x,ID,t) + F2(x,ID,t)
         if 1 == ID:
-            return  quad(F1F2GM,1e-9,1, args=(1,t), limit = 250)[0]
+            result =  [quad(F1F2GM,1e-9,1, args=(1,t), limit = 250)[0] for i in range(len(t))]
+            result = np.array(result)
+            return result
 
         if 2 == ID:
-            return quad(F1F2GM,1e-9,1, args=(2,t) ,limit = 250 )[0]
+            result = [quad(F1F2GM,1e-9,1, args=(2,t) ,limit = 250 )[0] for i in range(len(t))]
+            result = np.array(result)
+            return result
 ############################################################
     def GE(self, ID, t, #mu2, 
            H_aprime_uv, H_aprime_dv, H_aprime_sv,
@@ -113,10 +117,15 @@ class EMObservables:
             return F1(x,ID,t) +  np.divide(t,4 * m**2) * F2(x,ID,t)
 
         if 1 == ID:
-            return  quad(F1F2GE,1e-9,1, args=( 1,self.__m_p,t), limit = 250)[0]
+            result= [quad(F1F2GE,1e-9,1, args=( 1,self.__m_p,t[i]), limit = 250)[0] for i in range(len(t))]
+            result = np.array(result)
+            return result
+        #quad(F1F2GE,1e-9,1, args=( 1,self.__m_p,t), limit = 250)[0]
 
         if 2 == ID:
-            return quad(F1F2GE,1e-9,1, args=( 2,self.__m_n,t) ,limit = 250 )[0]            
+            result = [quad(F1F2GE,1e-9,1,  args=( 2,self.__m_n,t) ,limit = 250 )[0] for i in range(len(t))]   
+            result = np.array(result)
+            return result        
 ############################################################
     def RatioGEGM(self, ID, t, #mu2, 
            H_aprime_uv, H_aprime_dv, H_aprime_sv,
@@ -157,10 +166,14 @@ class EMObservables:
             return F1(x,ID,t) + F2(x,ID,t)
         
         if 1 == ID:
-            return  (quad(F1F2GE,1e-9,1, args=( 1,self.__m_p,t), limit = 250)[0])/quad(F1F2GM,1e-9,1, args=( 1,t), limit = 250)[0]
+            result =  ([quad(F1F2GE,1e-9,1, args=( 1,self.__m_p,t), limit = 250)[0] for i in range(len(t))])/[quad(F1F2GM,1e-9,1, args=( 1,t), limit = 250)[0] for i in range(len(t))  ]
+            result = np.array(result)
+            return result
 
         if 2 == ID:
-            return  (quad(F1F2GE,1e-9,1, args=( 2,self.__m_n,t), limit = 250)[0])/quad(F1F2GM,1e-9,1, args=( 2,t), limit = 250)[0]
+            result =  ([quad(F1F2GE,1e-9,1, args=( 2,self.__m_n,t), limit = 250)[0]for i in range(len(t))])/[quad(F1F2GM,1e-9,1, args=( 2,t), limit = 250)[0] for i in range(len(t))  ]
+            result = np.array(result)
+            return result
 
 ##################################  Subroutines ##################################
 
