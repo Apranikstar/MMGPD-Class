@@ -1,20 +1,42 @@
 import numpy as np
 from scipy.integrate import quad
 from .xPDFClass import xPDF
+from scipy.special import gamma as gamma_f   # gamma function
+
 
 
 class EMObservables:
     
-    def __init__(self, pdfSET):
-        self.pdf = xPDF(pdfSET)
+    def __init__(self, pdfSET,mu2, mp, mn , mup , mun):
+        self.__pdf = xPDF(pdfSET)
         self.__chargeUV = np.divide(2,3)
         self.__chargeDV = np.divide(-1,3)
         self.__chargeSV = np.divide(-1,3)
-        self.__m_p  = 0.93827
-        self.__m_n = 0.93956
+        self.__mup = mup
+        self.__mun = mun
+        self.__m_p  = mp
+        self.__m_n = mn
+        self.__mu2 = mu2
 
+        #def NORM(x,flavor,mu2):
+        #    return self.__pdf.xPDFCentVal(flavor,x,mu2)/x
+        #Nuv = quad(NORM, 1e-9 , 1, args=("uv",self.__mu2),limit = 300)[0]
+        #Ndv = quad(NORM, 1e-9 , 1, args=("dv",self.__mu2), limit = 300)[0]
+        ##Nsv = quad(NORM, 1e-9 , 1, args=("sv",self.__mu2))[0]
+        Nuv = quad(lambda x: self.__pdf.xPDFCentVal("uv", x, self.__mu2) / x, 1e-9, 1, limit=150)[0]
+        Ndv = quad(lambda x: self.__pdf.xPDFCentVal("dv", x, self.__mu2) / x, 1e-9, 1, limit=150)[0]
+        
+        self.__NormDict = {
+            "uv" : np.divide(2 , Nuv),
+            "dv" : np.divide(1 , Ndv),
+            "sv" : 1
+        }
+        
 ########################################################
-    def GM(self, t, Q2, #x,
+    def G_D(self, t):
+        return (  1 - t / 0.71 )**(-2) 
+        
+    def GM(self, ID, t, #mu2, 
            H_aprime_uv, H_aprime_dv, H_aprime_sv,
            H_B_uv, H_B_dv, H_B_sv,
            H_A_uv, H_A_dv, H_A_sv,
@@ -24,30 +46,37 @@ class EMObservables:
            E_alpha_uv, E_alpha_dv, E_alpha_sv,
            E_beta_uv, E_beta_dv, E_beta_sv,
            E_gamma_uv, E_gamma_dv,E_gamma_sv,
-           ID,  
+           Ks  
            ):
-        
-        F1uv = self.__chargeUV * quad(self.__H__, 1e-9, 1, args=(Q2,t, H_aprime_uv, H_B_uv, H_A_uv,"uv"),limit = 200)[0] 
-        F1dv = self.__chargeDV * quad(self.__H__, 1e-9, 1, args=(Q2,t,H_aprime_dv, H_B_dv, H_A_dv, "dv"),limit = 200)[0] 
-        F1sv = self.__chargeSV * quad(self.__H__, 1e-9, 1, args=(Q2,t, H_aprime_sv, H_B_sv, H_A_sv,"sv"),limit = 200)[0] 
+        self.__ks = Ks
+        ### Flavor Form Factors
+        def F1(x,ID,t):
+            F1uv =  self.__H__(x, self.__mu2,t, H_aprime_uv, H_B_uv, H_A_uv,"uv")
+            F1dv =  self.__H__(x, self.__mu2,t,H_aprime_dv, H_B_dv, H_A_dv, "dv")
+            F1sv =  self.__H__(x, self.__mu2,t, H_aprime_sv, H_B_sv, H_A_sv,"sv")
+            if 1 == ID:
+                return self.__chargeUV * F1uv + self.__chargeDV * F1dv + self.__chargeSV * F1sv
+            if 2 == ID:
+                return self.__chargeDV * F1uv + self.__chargeUV * F1dv + self.__chargeSV * F1sv
+                
+        def F2(x,ID,t):
+            F2uv =  self.__E__(x, t, E_aprime_uv, E_B_uv, E_A_uv, E_alpha_uv, E_beta_uv, E_gamma_uv, "uv")
+            F2dv =  self.__E__(x, t, E_aprime_dv, E_B_dv, E_A_dv, E_alpha_dv, E_beta_dv, E_gamma_dv, "dv")
+            F2sv = self.__E__(x, t, E_aprime_sv, E_B_sv, E_A_sv, E_alpha_sv, E_beta_sv, E_gamma_sv,"sv")
+            if 1 == ID:
+                return self.__chargeUV * F2uv + self.__chargeDV * F2dv + self.__chargeSV * F2sv
+            if 2 == ID:
+                return self.__chargeDV * F2uv + self.__chargeUV * F2dv + self.__chargeSV * F2sv
 
-        F2uv = quad(self.__E__, 1e-9, 1, args=(t, E_aprime_uv, E_B_uv, E_A_uv, E_alpha_uv, E_beta_uv, E_gamma_uv, "uv"),limit = 200)[0]
-        F2dv = quad(self.__E__, 1e-9, 1, args=(t, E_aprime_dv, E_B_dv, E_A_dv, E_alpha_dv, E_beta_dv, E_gamma_dv, "dv"),limit = 200)[0]
-        F2sv = quad(self.__E__, 1e-9, 1, args=(t, E_aprime_sv, E_B_sv, E_A_sv, E_alpha_sv, E_beta_sv, E_gamma_sv,"sv"),limit = 200)[0]
-
+        def F1F2GM(x,ID,t):
+            return F1(x,ID,t) + F2(x,ID,t)
         if 1 == ID:
-            F1p = self.__chargeUV * F1uv + self.__chargeDV * F1dv + self.__chargeSV * F1sv 
-            F2p = self.__chargeUV * F2uv + self.__chargeDV * F2dv + self.__chargeSV * F2sv 
-            return  F1p + F2p
+            return  quad(F1F2GM,1e-9,1, args=(1,t), limit = 250)[0]
 
         if 2 == ID:
-            F1n = self.__chargeDV * F1uv + self.__chargeUV * F1dv + self.__chargeSV * F1sv 
-            F2n = self.__chargeDV * F2uv + self.__chargeUV * F2dv + self.__chargeSV * F1sv 
-            return F1n + F2n
-
-
-########################################################
-    def GE(self, t, Q2, #x,
+            return quad(F1F2GM,1e-9,1, args=(2,t) ,limit = 250 )[0]
+############################################################
+    def GE(self, ID, t, #mu2, 
            H_aprime_uv, H_aprime_dv, H_aprime_sv,
            H_B_uv, H_B_dv, H_B_sv,
            H_A_uv, H_A_dv, H_A_sv,
@@ -56,50 +85,114 @@ class EMObservables:
            E_A_uv, E_A_dv, E_A_sv,
            E_alpha_uv, E_alpha_dv, E_alpha_sv,
            E_beta_uv, E_beta_dv, E_beta_sv,
-           E_gamma_uv, E_gamma_dv,E_gamma_sv  ,
-           ID
+           E_gamma_uv, E_gamma_dv,E_gamma_sv,
+           Ks  
            ):
-        
-
-        F1uv = self.__chargeUV * quad(self.__H__, 1e-9, 1, args=(Q2,t, H_aprime_uv, H_B_uv, H_A_uv,"uv"),limit = 200)[0] 
-        F1dv = self.__chargeDV * quad(self.__H__, 1e-9, 1, args=(Q2,t,H_aprime_dv, H_B_dv, H_A_dv, "dv"),limit = 200)[0] 
-        F1sv = self.__chargeSV * quad(self.__H__, 1e-9, 1, args=(Q2,t, H_aprime_sv, H_B_sv, H_A_sv,"sv"),limit = 200)[0] 
-
-        F2uv = quad(self.__E__, 1e-9, 1, args=(t, E_aprime_uv, E_B_uv, E_A_uv, E_alpha_uv, E_beta_uv, E_gamma_uv, "uv"),limit = 200)[0]
-        F2dv = quad(self.__E__, 1e-9, 1, args=(t, E_aprime_dv, E_B_dv, E_A_dv, E_alpha_dv, E_beta_dv, E_gamma_dv, "dv"),limit = 200)[0]
-        F2sv = quad(self.__E__, 1e-9, 1, args=(t, E_aprime_sv, E_B_sv, E_A_sv, E_alpha_sv, E_beta_sv, E_gamma_sv,"sv"),limit = 200)[0]
+        self.__ks = Ks
+        ### Flavor Form Factors
+        def F1(x,ID,t):
+            F1uv =  self.__H__(x, self.__mu2,t, H_aprime_uv, H_B_uv, H_A_uv,"uv")
+            F1dv =  self.__H__(x, self.__mu2,t,H_aprime_dv, H_B_dv, H_A_dv, "dv")
+            F1sv =  self.__H__(x, self.__mu2,t, H_aprime_sv, H_B_sv, H_A_sv,"sv")
+            if 1 == ID:
+                return self.__chargeUV * F1uv + self.__chargeDV * F1dv + self.__chargeSV * F1sv
+            if 2 == ID:
+                return self.__chargeDV * F1uv + self.__chargeUV * F1dv + self.__chargeSV * F1sv
+            
+                
+        def F2(x,ID,t):
+            F2uv =  self.__E__(x, t, E_aprime_uv, E_B_uv, E_A_uv, E_alpha_uv, E_beta_uv, E_gamma_uv, "uv")
+            F2dv =  self.__E__(x, t, E_aprime_dv, E_B_dv, E_A_dv, E_alpha_dv, E_beta_dv, E_gamma_dv, "dv")
+            F2sv = self.__E__(x, t, E_aprime_sv, E_B_sv, E_A_sv, E_alpha_sv, E_beta_sv, E_gamma_sv,"sv")
+            if 1 == ID:
+                return self.__chargeUV * F2uv + self.__chargeDV * F2dv + self.__chargeSV * F2sv
+            if 2 == ID:
+                return self.__chargeDV * F2uv + self.__chargeUV * F2dv + self.__chargeSV * F2sv
+                
+        def F1F2GE(x, ID, m,t):
+            return F1(x,ID,t) +  np.divide(t,4 * m**2) * F2(x,ID,t)
 
         if 1 == ID:
-            F1p = self.__chargeUV * F1uv + self.__chargeDV * F1dv + self.__chargeSV * F1sv 
-            F2p = self.__chargeUV * F2uv + self.__chargeDV * F2dv + self.__chargeSV * F2sv 
-            return F1p + np.divide(t,4 * self.__m_p**2) * F2p
+            return  quad(F1F2GE,1e-9,1, args=( 1,self.__m_p,t), limit = 250)[0]
 
         if 2 == ID:
-            F1n = self.__chargeDV * F1uv + self.__chargeUV * F1dv + self.__chargeSV * F1sv 
-            F2n = self.__chargeDV * F2uv + self.__chargeUV * F2dv + self.__chargeSV * F1sv 
-            return F1n + np.divide(t,4* self.__m_n **2) * F2n
+            return quad(F1F2GE,1e-9,1, args=( 2,self.__m_n,t) ,limit = 250 )[0]            
+############################################################
+    def RatioGEGM(self, ID, t, #mu2, 
+           H_aprime_uv, H_aprime_dv, H_aprime_sv,
+           H_B_uv, H_B_dv, H_B_sv,
+           H_A_uv, H_A_dv, H_A_sv,
+           E_aprime_uv, E_aprime_dv, E_aprime_sv,
+           E_B_uv, E_B_dv, E_B_sv,
+           E_A_uv, E_A_dv, E_A_sv,
+           E_alpha_uv, E_alpha_dv, E_alpha_sv,
+           E_beta_uv, E_beta_dv, E_beta_sv,
+           E_gamma_uv, E_gamma_dv,E_gamma_sv,
+           Ks  
+           ):
+        self.__ks = Ks
+        ### Flavor Form Factors
+        def F1(x,ID,t):
+            F1uv =  self.__H__(x, self.__mu2,t, H_aprime_uv, H_B_uv, H_A_uv,"uv")
+            F1dv =  self.__H__(x, self.__mu2,t,H_aprime_dv, H_B_dv, H_A_dv, "dv")
+            F1sv =  self.__H__(x, self.__mu2,t, H_aprime_sv, H_B_sv, H_A_sv,"sv")
+            if 1 == ID:
+                return self.__chargeUV * F1uv + self.__chargeDV * F1dv + self.__chargeSV * F1sv
+            if 2 == ID:
+                return self.__chargeDV * F1uv + self.__chargeUV * F1dv + self.__chargeSV * F1sv
+            
+                
+        def F2(x,ID,t):
+            F2uv =  self.__E__(x, t, E_aprime_uv, E_B_uv, E_A_uv, E_alpha_uv, E_beta_uv, E_gamma_uv, "uv")
+            F2dv =  self.__E__(x, t, E_aprime_dv, E_B_dv, E_A_dv, E_alpha_dv, E_beta_dv, E_gamma_dv, "dv")
+            F2sv = self.__E__(x, t, E_aprime_sv, E_B_sv, E_A_sv, E_alpha_sv, E_beta_sv, E_gamma_sv,"sv")
+            if 1 == ID:
+                return self.__chargeUV * F2uv + self.__chargeDV * F2dv + self.__chargeSV * F2sv
+            if 2 == ID:
+                return self.__chargeDV * F2uv + self.__chargeUV * F2dv + self.__chargeSV * F2sv
+                
+        def F1F2GE(x, ID, m,t):
+            return (F1(x,ID,t) +  np.divide(t,4 * m**2) * F2(x,ID,t))
+        def F1F2GM(x,ID,t):
+            return F1(x,ID,t) + F2(x,ID,t)
+        
+        if 1 == ID:
+            return  (quad(F1F2GE,1e-9,1, args=( 1,self.__m_p,t), limit = 250)[0])/quad(F1F2GM,1e-9,1, args=( 1,t), limit = 250)[0]
 
-
+        if 2 == ID:
+            return  (quad(F1F2GE,1e-9,1, args=( 2,self.__m_n,t), limit = 250)[0])/quad(F1F2GM,1e-9,1, args=( 2,t), limit = 250)[0]
 
 ##################################  Subroutines ##################################
 
     def __f__(self, x, aprime, B, A):
         return aprime *  np.power(1- x,3) * np.log( np.divide(1,x) ) + B * np.power(1-x,3) + A * x * np.power(1-x,2)
     
-    def __H__(self, x,Q2,t,aprime,B,A,flavor):
-        return self.pdf.xPDFCentVal(flavor,x,Q2)/x * np.exp(t * self.__f__(x,aprime,B,A))
+    def __H__(self, x,mu2,t,aprime,B,A,flavor):
+        return  self.__NormDict.get(flavor) * self.__pdf.xPDFCentVal(flavor,x,mu2)/x * np.exp(t * self.__f__(x,aprime,B,A)) 
     
     def __E__(self, x, t, aprime, B, A, alpha, beta, gamma, flavor):
         return self.__pdfEHandler__(flavor, x,alpha,beta,gamma) * np.exp(t * self.__f__(x,aprime,B,A))
     
     def __pdfEHandler__(self, flavor, x,alpha,beta,gamma):
-        def integrand(x, alpha, beta, gamma):
-            return (np.power(x, -alpha) * np.power(1-x, beta) * (1 + gamma * np.sqrt(x)))
-        k = {
-        "uv": 1.67,
-        "dv": -2.03,
-        "sv": 0
-            
-        }
-        N = np.divide(1, quad(integrand, 1e-9, 1, args=(alpha, beta, gamma))[0])
+
+        # kp= mup-1  ,  kn= mun , 
+        #   if (Vks==0.d0)ku= 2*kp + kn , kd= kp + 2*kn
+        # else:  ku= 2*kp + kn + Vks  , kd= kp + 2*kn + Vks
+         
+        if 0 == self.__ks:
+
+            k  = {
+            "uv": 2 * (self.__mup - 1) + self.__mun,
+            "dv": (self.__mup - 1) + 2 * self.__mun,
+            "sv": 0
+            }
+        elif 0 != self.__ks:
+            k = {
+            "uv":  2 * (self.__mup - 1) + self.__mun + self.__ks,
+            "dv": (self.__mup - 1) + 2 * self.__mun + self.__ks,
+            "sv": self.__ks
+            }
+        N = np.divide(1,(gamma_f(1.+beta) * gamma_f(1.0-alpha)/gamma_f(2.-alpha+beta))  +
+             (gamma*gamma_f(1.+beta)*gamma_f(1.5-alpha)/gamma_f(2.5-alpha+beta))   )
+        
         return k.get(flavor) * N * np.power(x,-alpha) * np.power(1-x,beta) * (1+ gamma * np.sqrt(x))
