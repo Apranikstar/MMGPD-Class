@@ -71,12 +71,12 @@ class EMObservables:
         def F1F2GM(x,ID,t):
             return F1(x,ID,t) + F2(x,ID,t)
         if 1 == ID:
-            result =  [quad(F1F2GM,1e-9,1, args=(1,t), limit = 250)[0] for i in range(len(t))]
+            result =  [quad(F1F2GM,1e-9,1, args=(1,t[i]), limit = 250)[0] for i in range(len(t))]
             result = np.array(result)
             return result
 
         if 2 == ID:
-            result = [quad(F1F2GM,1e-9,1, args=(2,t) ,limit = 250 )[0] for i in range(len(t))]
+            result = [quad(F1F2GM,1e-9,1, args=(2,t[i]) ,limit = 250 )[0] for i in range(len(t))]
             result = np.array(result)
             return result
 ############################################################
@@ -123,7 +123,7 @@ class EMObservables:
         #quad(F1F2GE,1e-9,1, args=( 1,self.__m_p,t), limit = 250)[0]
 
         if 2 == ID:
-            result = [quad(F1F2GE,1e-9,1,  args=( 2,self.__m_n,t) ,limit = 250 )[0] for i in range(len(t))]   
+            result = [quad(F1F2GE,1e-9,1,  args=( 2,self.__m_n,t[i]) ,limit = 250 )[0] for i in range(len(t))]   
             result = np.array(result)
             return result        
 ############################################################
@@ -166,12 +166,12 @@ class EMObservables:
             return F1(x,ID,t) + F2(x,ID,t)
         
         if 1 == ID:
-            result =  ([quad(F1F2GE,1e-9,1, args=( 1,self.__m_p,t), limit = 250)[0] for i in range(len(t))])/[quad(F1F2GM,1e-9,1, args=( 1,t), limit = 250)[0] for i in range(len(t))  ]
+            result =  ([quad(F1F2GE,1e-9,1, args=( 1,self.__m_p,t[i]), limit = 250)[0] for i in range(len(t))])/[quad(F1F2GM,1e-9,1, args=( 1,t), limit = 250)[0] for i in range(len(t))  ]
             result = np.array(result)
             return result
 
         if 2 == ID:
-            result =  ([quad(F1F2GE,1e-9,1, args=( 2,self.__m_n,t), limit = 250)[0]for i in range(len(t))])/[quad(F1F2GM,1e-9,1, args=( 2,t), limit = 250)[0] for i in range(len(t))  ]
+            result =  ([quad(F1F2GE,1e-9,1, args=( 2,self.__m_n,t[i]), limit = 250)[0]for i in range(len(t))])/[quad(F1F2GM,1e-9,1, args=( 2,t), limit = 250)[0] for i in range(len(t))  ]
             result = np.array(result)
             return result
 
