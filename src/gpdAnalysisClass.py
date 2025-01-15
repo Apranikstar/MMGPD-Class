@@ -103,14 +103,27 @@ class GPDAnalysis:
         """
         if xi ==0:
             return self.xGPD(analysisSet, gpdType, flavor, x, t)
-        b0 = np.divide(x+xi,1+xi)
-        if x <= xi:
-            a0 = 1e-5
+        if (("uv" == flavor) or ("dv"==flavor) or ("sv"==flavor)):
+            b0 = np.divide(x+xi,1+xi)
+            if x <= xi:
+                a0 = 1e-5
+            else:
+                a0 = np.divide(x-xi,1-xi) 
+            return quad(self.__xGPDxiIntegrand__, a0, b0, args=(analysisSet, gpdType , flavor,x,t,xi),epsabs=1e-9, limit = 150 )[0]
         else:
-            a0 = np.divide(x-xi,1-xi) 
-        return quad(self.__xGPDxiIntegrand__, a0, b0, args=(analysisSet, gpdType , flavor,x,t,xi),epsabs=1e-9, limit = 150 )[0]
-
+            b0 = np.divide(x+xi,1+xi)
+            b0m = np.divide(-x+xi,1+xi)
+            if x <= xi:
+                a0 = 1e-5
+                return (quad(self.__xGPDxiIntegrand__, a0, b0, args=(analysisSet, gpdType , flavor,x,t,xi),epsabs=1e-9, limit = 150 )[0]-
+                        quad(self.__xGPDxiIntegrand2__, a0, b0m, args=(analysisSet, gpdType , flavor,x,t,xi),epsabs=1e-9, limit = 150 )[0])
         
+            elif x > xi:
+                a0 = np.divide(x-xi,1-xi)
+                return quad(self.__xGPDxiIntegrand__, a0, b0, args=(analysisSet, gpdType , flavor,x,t,xi),epsabs=1e-9, limit = 150 )[0]
+ 
+                                              
+
         
     
 #################################### Setters
@@ -233,7 +246,21 @@ class GPDAnalysis:
     def __xGPDxiIntegrand__( self, b, analysisSet, gpdType , flavor , x, t , xi ):
         #Hv = MMGPD.xGPD(InitilizerArgs, Set, GPDType , Flavour, b, t) / b
         Hv = self.xGPD(analysisSet, gpdType, flavor, x, t)
-        sd = np.divide(Hv, np.power(1-b,3))
-        return np.divide(3,4)*sd*(np.power(1-b,2)-np.power(x-b,2)/np.power(xi,2))/xi
+        if (("uv" == flavor) or ("dv"==flavor) or ("sv"==flavor)):
+            sd = np.divide(Hv, np.power(1-b,3))
+            return np.divide(3,4)*sd*(np.power(1-b,2)-np.power(x-b,2)/np.power(xi,2))/xi
+        if (("ubar" == flavor) or ("dbar"==flavor) or ("sbar"==flavor)):
+            sd = np.divide(Hv, np.power(1-b,5)) 
+            return np.divide(15,16)*sd*(np.power(1-b,2)-np.power(x-b,2)/np.power(xi,2))/xi  
+
+    def __xGPDxiIntegrand2__( self, b, analysisSet, gpdType , flavor , x, t , xi ):
+        #Hv = MMGPD.xGPD(InitilizerArgs, Set, GPDType , Flavour, b, t) / b
+        Hv = self.xGPD(analysisSet, gpdType, flavor, x, t)
+        if (("ubar" == flavor) or ("dbar"==flavor) or ("sbar"==flavor)):
+            sd = np.divide(Hv, np.power(1-b,5)) 
+            return np.divide(15,16)*sd*(np.power(1-b,2)-np.power(x+b,2)/np.power(xi,2))/xi  
+
+
+
 
 ################################### End of xGPD Subroutines
