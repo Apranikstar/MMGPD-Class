@@ -166,7 +166,7 @@ class EMObservables:
             return  np.array(result)
 
 ##################################  PRad SigR ##################################
-    def SigR(self, ID, t, #mu2, 
+    def SigR(self, ID, t, episilon, #mu2, 
            H_aprime_uv, H_aprime_dv, H_aprime_sv,
            H_B_uv, H_B_dv, H_B_sv,
            H_A_uv, H_A_dv, H_A_sv,
@@ -177,7 +177,6 @@ class EMObservables:
            E_beta_uv, E_beta_dv, E_beta_sv,
            E_gamma_uv, E_gamma_dv,E_gamma_sv,
            Ks,
-           episilon  
            ):
         self.__ks = Ks
         ### Flavor Form Factors
@@ -194,7 +193,7 @@ class EMObservables:
         def F2(x,ID,t):
             F2uv =  self.__E__(x, t, E_aprime_uv, E_B_uv, E_A_uv, E_alpha_uv, E_beta_uv, E_gamma_uv, "uv")
             F2dv =  self.__E__(x, t, E_aprime_dv, E_B_dv, E_A_dv, E_alpha_dv, E_beta_dv, E_gamma_dv, "dv")
-            F2sv = self.__E__(x, t, E_aprime_sv, E_B_sv, E_A_sv, E_alpha_sv, E_beta_sv, E_gamma_sv,"sv")
+            F2sv =  self.__E__(x, t, E_aprime_sv, E_B_sv, E_A_sv, E_alpha_sv, E_beta_sv, E_gamma_sv, "sv")
             if 1 == ID:
                 return self.__chargeUV * F2uv + self.__chargeDV * F2dv + self.__chargeSV * F2sv
             if 2 == ID:
@@ -204,14 +203,13 @@ class EMObservables:
             return (F1(x,ID,t) +  np.divide(t,4 * m**2) * F2(x,ID,t))
         def F1F2GM(x,ID,t):
             return F1(x,ID,t) + F2(x,ID,t)
-         
+        
         if 1 == ID:
-            tau = np.divide(self.__mu2 , 4 * np.power(self.__m_p,2))
-            return   (np.array([episilon * quad(F1F2GE,1e-9,1, args=( 1,self.__m_p,t[i]), limit = 250)[0] for i in range(len(t))]))+np.array([tau * quad(F1F2GM,1e-9,1, args=( 1,t[i]), limit = 250)[0] for i in range(len(t))  ])
-
+            #tau = np.divide(-t , 4 * np.power(self.__m_p,2)) 
+            return   (np.array([episilon[i] * np.power(quad(F1F2GE,1e-9,1, args=( 1,self.__m_p,t[i]), limit = 250)[0],2) for i in range(len(t))]))+np.array([ np.divide(-t[i] , 4 * np.power(self.__m_p,2)) * np.power(quad(F1F2GM,1e-9,1, args=( 1,t[i]), limit = 250)[0],2) for i in range(len(t))  ])
         if 2 == ID:
-            tau = np.divide(self.__mu2 , 4 * np.power(self.__m_n,2))
-            return   (np.array([quad(F1F2GE,1e-9,1, args=( 2,self.__m_n,t[i]), limit = 250)[0]for i in range(len(t))]))+np.array([quad(F1F2GM,1e-9,1, args=( 2,t[i]), limit = 250)[0] for i in range(len(t))  ])
+            #tau = np.divide(-t , 4 * np.power(self.__m_n,2)) 
+            return   (np.array([episilon[i] * np.power(quad(F1F2GE,1e-9,1, args=( 2,self.__m_n,t[i]), limit = 250)[0],2) for i in range(len(t))]))+np.array([ np.divide(-t[i] , 4 * np.power(self.__m_n,2)) * np.power(quad(F1F2GM,1e-9,1, args=( 2,t[i]), limit = 250)[0],2) for i in range(len(t))  ])
 ##################################  PRad SigTot ##################################
     def SigTot(self, ID, t, #mu2, 
            H_aprime_uv, H_aprime_dv, H_aprime_sv,
